@@ -1396,9 +1396,10 @@ func (c *ClusterClient) pipelineReadCmds(
 	cmds []Cmder,
 	failedCmds *cmdsMap,
 ) error {
-	internal.Logger.Printf(ctx, "------------------pipelineReadCmds-----------------------")
 	for i, cmd := range cmds {
 		err := cmd.readReply(rd)
+		shouldLog := rand.Intn(10) == 0
+		internal.Logger.Printf(ctx, "--------------err before %s--------------", err)
 		cmd.SetErr(err)
 
 		if err == nil {
@@ -1408,9 +1409,9 @@ func (c *ClusterClient) pipelineReadCmds(
 		if c.checkMovedErr(ctx, cmd, err, failedCmds) {
 			continue
 		}
-
+		internal.Logger.Printf(ctx, "--------------err after %s--------------", err)
 		// we may get >1k errors per second, lower the log volume to 1%
-		shouldLog := rand.Intn(100) == 0
+
 		if c.opt.ReadOnly && isBadConn(ctx, err, false, node.Client.getAddr(), shouldLog) {
 			node.MarkAsFailing()
 		}
