@@ -1405,12 +1405,12 @@ func (c *ClusterClient) pipelineReadCmds(
 		}
 
 		shouldLog := rand.Intn(10) == 0
-		internal.Logger.Printf(ctx, "--------------err before %s--------------", err)
+		internal.Logger.Printf(ctx, "--------------err before isNil:%v err: %v string: %s------------", err == nil, err, err.Error())
 		if c.checkMovedErr(ctx, cmd, err, failedCmds) {
-			internal.Logger.Printf(ctx, "--------------err after %s--------------", err)
+			internal.Logger.Printf(ctx, "--------------err after isNil:%v err: %v------------", err == nil, err)
 			continue
 		}
-		internal.Logger.Printf(ctx, "--------------err after continue %s--------------", err)
+		internal.Logger.Printf(ctx, "--------------err after continueisNil:%v err: %v------------", err == nil, err)
 		// we may get >1k errors per second, lower the log volume to 1%
 
 		if c.opt.ReadOnly && isBadConn(ctx, err, false, node.Client.getAddr(), shouldLog) {
