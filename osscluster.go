@@ -1396,6 +1396,7 @@ func (c *ClusterClient) pipelineReadCmds(
 	cmds []Cmder,
 	failedCmds *cmdsMap,
 ) error {
+	internal.Logger.Printf(ctx, "------------------pipelineReadCmds-----------------------")
 	for i, cmd := range cmds {
 		err := cmd.readReply(rd)
 		cmd.SetErr(err)
