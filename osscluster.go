@@ -1374,7 +1374,7 @@ func (c *ClusterClient) processPipelineNodeConn(
 	if err := cn.WithWriter(c.context(ctx), c.opt.WriteTimeout, func(wr *proto.Writer) error {
 		return writeCmds(wr, cmds)
 	}); err != nil {
-		if isBadConn(err, false, node.Client.getAddr()) {
+		if isBadConn(ctx, err, false, node.Client.getAddr(), false) {
 			node.MarkAsFailing()
 		}
 		if shouldRetry(err, true) {
@@ -1408,7 +1408,7 @@ func (c *ClusterClient) pipelineReadCmds(
 			continue
 		}
 
-		if c.opt.ReadOnly && isBadConn(err, false, node.Client.getAddr()) {
+		if c.opt.ReadOnly && isBadConn(ctx, err, false, node.Client.getAddr(), true) {
 			node.MarkAsFailing()
 		}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9/internal"
 	"github.com/redis/go-redis/v9/internal/pool"
 	"github.com/redis/go-redis/v9/internal/proto"
+	"github.com/redis/go-redis/v9/internal/rand"
 )
 
 // ErrClosed performs any operation on the closed client will return this error.
@@ -87,30 +88,47 @@ func isRedisError(err error) bool {
 	return ok
 }
 
-func isBadConn(err error, allowTimeout bool, addr string) bool {
+func isBadConn(ctx context.Context, err error, allowTimeout bool, addr string, shouldLog bool) bool {
+	// sample logging the error as it could get up to 1k errors per second
+	shouldLog = shouldLog && rand.Intn(100) == 0
 	switch err {
 	case nil:
+		if shouldLog {
+			internal.Logger.Printf(ctx, "isBadConn: nil error: %v", err)
+		}
 		return false
 	case context.Canceled, context.DeadlineExceeded:
+		internal.Logger.Printf(ctx, "isBadConn: context error: %v", err)
 		return true
 	}
 
 	if isRedisError(err) {
 		switch {
 		case isReadOnlyError(err):
+			if shouldLog {
+				internal.Logger.Printf(ctx, "isBadConn: is read-only error: %v", err)
+			}
 			// Close connections in read only state in case domain addr is used
 			// and domain resolves to a different Redis Server. See #790.
 			return true
 		case isMovedSameConnAddr(err, addr):
+			if shouldLog {
+				internal.Logger.Printf(ctx, "isBadConn: is isMovedSameConnAddr error: %v", err)
+			}
 			// Close connections when we are asked to move to the same addr
 			// of the connection. Force a DNS resolution when all connections
 			// of the pool are recycled
 			return true
 		default:
+			if shouldLog {
+				internal.Logger.Printf(ctx, "isBadConn:other redis error: %v", err)
+			}
 			return false
 		}
 	}
-
+	if shouldLog {
+		internal.Logger.Printf(ctx, "go-redis:other error: %v", err)
+	}
 	if allowTimeout {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return false
