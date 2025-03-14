@@ -126,7 +126,9 @@ func isBadConn(ctx context.Context, err error, allowTimeout bool, addr string, s
 			return false
 		}
 	}
-	internal.Logger.Printf(ctx, "go-redis:other error: %v", err)
+	if shouldLog {
+		internal.Logger.Printf(ctx, "go-redis:other error: %v", err)
+	}
 	if allowTimeout {
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			return false
